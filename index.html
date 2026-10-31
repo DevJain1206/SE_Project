@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cafe Management System</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+<!-- Login Screen -->
+<div id="login-screen" class="login-screen">
+  <div class="login-box">
+    <div class="login-header">
+      <div class="login-badge">System Access</div>
+      <h1 class="login-title">Cafe Management System</h1>
+      <p class="login-sub">Select an access role to proceed</p>
+    </div>
+
+    <div class="login-cards">
+      <div class="login-card" onclick="loginAs('customer')">
+        <div class="lc-role">Customer Portal</div>
+        <div class="lc-desc">Browse the menu catalog, assemble items in cart, and place orders.</div>
+        <button class="lc-btn">Continue as Customer</button>
+      </div>
+
+      <div class="login-card login-card-admin" onclick="loginAs('admin')">
+        <div class="lc-role">Administration</div>
+        <div class="lc-desc">Manage catalog items, monitor live orders, and process payments.</div>
+        <button class="lc-btn lc-btn-admin">Continue as Admin</button>
+      </div>
+    </div>
+
+    <div class="login-footer">
+      <span>Evaluation mode active. No credentials required.</span>
+    </div>
+  </div>
+</div>
+
+<!-- Main Application Shell -->
+<div id="app-shell" class="app-shell hidden">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="brand-title">Cafe Management</div>
+      <div class="brand-sub" id="sb-role-label">Customer</div>
+    </div>
+
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+
+    <div class="sidebar-footer">
+      <div class="user-block">
+        <div class="su-avatar" id="su-avatar">C</div>
+        <div class="su-info">
+          <div class="su-name" id="su-name">Customer</div>
+          <div class="su-role" id="su-role-text">Customer Portal</div>
+        </div>
+      </div>
+      <button class="su-logout" onclick="logout()" title="Sign out of system">Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="main-content" id="main-content">
+
+    <!-- CUSTOMER SECTION -->
+
+    <!-- C1: Menu Catalog -->
+    <section id="page-c-menu" class="page">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Menu Catalog</h1>
+          <p class="page-sub">Available items for order</p>
+        </div>
+        <button class="btn btn-primary" onclick="navigate('c-cart')">
+          View Cart <span class="cart-badge" id="header-cart-badge"></span>
+        </button>
+      </div>
+
+      <div class="toolbar">
+        <div class="search-wrap">
+          <input type="text" id="c-menu-search" class="input-field"
+                 placeholder="Search menu items..." oninput="renderCustomerMenu()" />
+        </div>
+        <select id="c-menu-cat" class="input-field select-field" onchange="renderCustomerMenu()">
+          <option value="">All Categories</option>
+        </select>
+      </div>
+
+      <div class="page-body">
+        <div class="menu-grid" id="c-menu-grid"></div>
+      </div>
+    </section>
+
+    <!-- C2: Cart -->
+    <section id="page-c-cart" class="page">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Current Order</h1>
+          <p class="page-sub">Review selected items before submission</p>
+        </div>
+        <button class="btn btn-secondary" onclick="navigate('c-menu')">Back to Catalog</button>
+      </div>
+
+      <div class="page-body page-body-narrow">
+        <div class="table-wrap" id="cart-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Category</th>
+                <th style="text-align:right">Unit Price</th>
+                <th style="text-align:center">Quantity</th>
+                <th style="text-align:right">Subtotal</th>
+                <th style="text-align:center;width:60px">Action</th>
+              </tr>
+            </thead>
+            <tbody id="cart-body"></tbody>
+          </table>
+        </div>
+        <div id="cart-summary-panel"></div>
+      </div>
+    </section>
+
+    <!-- C3: My Orders -->
+    <section id="page-c-orders" class="page">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Order History</h1>
+          <p class="page-sub">Status and receipts for submitted orders</p>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="renderMyOrders()">Refresh</button>
+      </div>
+
+      <div class="page-body">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:90px">Order ID</th>
+                <th>Timestamp</th>
+                <th>Items Ordered</th>
+                <th style="text-align:right">Total</th>
+                <th style="text-align:center">Status</th>
+                <th style="text-align:center">Payment</th>
+                <th style="text-align:right;width:110px">Receipt</th>
+              </tr>
+            </thead>
+            <tbody id="my-orders-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ADMIN SECTION -->
+
+    <!-- A1: Dashboard -->
+    <section id="page-a-dashboard" class="page">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Dashboard</h1>
+          <p class="page-sub" id="a-dash-time">Operations Overview</p>
+        </div>
+      </div>
+
+      <div class="page-body">
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-label">Catalog Items</div>
+            <div class="stat-value" id="as-menu">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Orders</div>
+            <div class="stat-value" id="as-orders">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Active Orders</div>
+            <div class="stat-value" id="as-live">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Unpaid Orders</div>
+            <div class="stat-value" id="as-unpaid">0</div>
+          </div>
+        </div>
+
+        <div class="section-header">
+          <h2 class="section-title">Active Orders</h2>
+        </div>
+
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:90px">Order ID</th>
+                <th>Timestamp</th>
+                <th>Items</th>
+                <th style="text-align:right">Total</th>
+                <th style="text-align:center">Status</th>
+                <th style="text-align:center">Payment</th>
+                <th style="text-align:right;width:240px">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="a-live-orders-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- A2: Menu Management -->
+    <section id="page-a-menu" class="page">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Menu Management</h1>
+          <p class="page-sub">Catalog items, pricing, and availability</p>
+        </div>
+        <button class="btn btn-primary" onclick="openAddItemModal()">Add Item</button>
+      </div>
+
+      <div class="toolbar">
+        <div class="search-wrap">
+          <input type="text" id="a-menu-search" class="input-field"
+                 placeholder="Search catalog..." oninput="renderAdminMenu()" />
+        </div>
+        <select id="a-menu-cat" class="input-field select-field" onchange="renderAdminMenu()">
+          <option value="">All Categories</option>
+        </select>
+        <label class="checkbox-wrap">
+          <input type="checkbox" id="a-avail-only" onchange="renderAdminMenu()" />
+          <span>Available items only</span>
+        </label>
+      </div>
+
+      <div class="page-body">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:70px">ID</th>
+                <th>Item Name</th>
+                <th>Category</th>
+                <th style="text-align:right">Price</th>
+                <th style="text-align:center">Availability</th>
+                <th>Description</th>
+                <th style="text-align:right;width:150px">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="a-menu-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- A3: Order Management -->
+    <section id="page-a-orders" class="page">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Order Management</h1>
+          <p class="page-sub">Historical and active customer orders</p>
+        </div>
+        <div class="header-actions">
+          <select id="a-order-filter" class="input-field select-field" onchange="renderAdminOrders()">
+            <option value="">All Statuses</option>
+            <option>Pending</option>
+            <option>Preparing</option>
+            <option>Ready</option>
+            <option>Completed</option>
+            <option>Cancelled</option>
+          </select>
+          <select id="a-pay-filter" class="input-field select-field" onchange="renderAdminOrders()">
+            <option value="">All Payment States</option>
+            <option>Unpaid</option>
+            <option>Paid</option>
+          </select>
+          <button class="btn btn-secondary btn-sm" onclick="renderAdminOrders()">Refresh</button>
+        </div>
+      </div>
+
+      <div class="page-body">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:90px">Order ID</th>
+                <th>Date &amp; Time</th>
+                <th>Items Ordered</th>
+                <th style="text-align:right">Total</th>
+                <th style="text-align:center">Status</th>
+                <th style="text-align:center">Payment</th>
+                <th style="text-align:right;width:140px">Receipt</th>
+              </tr>
+            </thead>
+            <tbody id="a-orders-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- MODALS -->
+
+<!-- Add / Edit Item Modal -->
+<div class="modal-overlay" id="item-modal-overlay" onclick="closeItemModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="item-modal-title">Add Menu Item</h2>
+      <button class="modal-close" onclick="closeItemModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="item-id" />
+      <div class="form-group">
+        <label class="form-label">Item Name <span class="req">*</span></label>
+        <input type="text" id="item-name" class="input-field" placeholder="e.g. Espresso" maxlength="150" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Category <span class="req">*</span></label>
+          <select id="item-category" class="input-field select-field">
+            <option value="">Select category</option>
+            <option>Coffee</option>
+            <option>Tea</option>
+            <option>Cold Drinks</option>
+            <option>Snacks</option>
+            <option>Desserts</option>
+            <option>Bakery</option>
+            <option>Breakfast</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Price (₹) <span class="req">*</span></label>
+          <input type="number" id="item-price" class="input-field" placeholder="0.00" min="0.01" step="0.01" max="99999" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea id="item-desc" class="input-field textarea-field" placeholder="Item description..." maxlength="500"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="checkbox-wrap">
+          <input type="checkbox" id="item-available" checked />
+          <span>Active for orders</span>
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeItemModal()">Cancel</button>
+      <button class="btn btn-primary" id="item-save-btn" onclick="saveItem()">Save Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Price Modal -->
+<div class="modal-overlay" id="price-modal-overlay" onclick="closePriceModal(event)">
+  <div class="modal modal-narrow">
+    <div class="modal-header">
+      <h2>Edit Price</h2>
+      <button class="modal-close" onclick="closePriceModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="price-item-id" />
+      <div class="form-group">
+        <label class="form-label" id="price-item-name-label">New Price</label>
+        <input type="number" id="price-input" class="input-field" min="0.01" step="0.01" max="99999"
+               placeholder="0.00" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closePriceModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="savePrice()">Update Price</button>
+    </div>
+  </div>
+</div>
+
+<!-- Order Confirmation Modal -->
+<div class="modal-overlay" id="confirm-modal-overlay" onclick="closeConfirmModal(event)">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h2>Order Confirmation</h2>
+      <button class="modal-close" onclick="closeConfirmModal()">×</button>
+    </div>
+    <div class="modal-body" id="confirm-modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmPlaceOrder()">Submit Order</button>
+    </div>
+  </div>
+</div>
+
+<!-- Order Detail Modal -->
+<div class="modal-overlay" id="detail-modal-overlay" onclick="closeDetailModal(event)">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h2 id="detail-modal-title">Order Receipt</h2>
+      <button class="modal-close" onclick="closeDetailModal()">×</button>
+    </div>
+    <div class="modal-body" id="detail-modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeDetailModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="toast" id="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>

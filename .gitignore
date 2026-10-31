@@ -1,0 +1,31 @@
+# ─────────────────────────────────────────────
+#  .gitignore for Cafe Management System
+# ─────────────────────────────────────────────
+
+# Maven build output
+target/
+
+# Database credentials — NEVER commit this
+config/db.properties
+
+# IntelliJ IDEA project files
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# VS Code files
+.vscode/
+*.classpath
+*.project
+*.settings/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+
+# Maven wrapper zip (downloaded, not needed in repo)
+.mvn/wrapper/maven-wrapper.jar
